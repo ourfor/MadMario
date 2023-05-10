@@ -10,7 +10,7 @@ from metrics import MetricLogger
 from agent import Mario
 from wrappers import ResizeObservation, SkipFrame
 
-env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0')
+env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0', render_mode='human', apply_api_compatibility=True)
 
 env = JoypadSpace(
     env,
@@ -29,7 +29,7 @@ env.reset()
 save_dir = Path('checkpoints') / datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
 save_dir.mkdir(parents=True)
 
-checkpoint = Path('checkpoints/2020-10-21T18-25-27/mario.chkpt')
+checkpoint = Path('trained_mario.chkpt')
 mario = Mario(state_dim=(4, 84, 84), action_dim=env.action_space.n, save_dir=save_dir, checkpoint=checkpoint)
 mario.exploration_rate = mario.exploration_rate_min
 
@@ -39,7 +39,7 @@ episodes = 100
 
 for e in range(episodes):
 
-    state = env.reset()
+    state, info = env.reset()
 
     while True:
 
@@ -47,7 +47,8 @@ for e in range(episodes):
 
         action = mario.act(state)
 
-        next_state, reward, done, info = env.step(action)
+        next_state, reward, truncated, terminated, info = env.step(action)
+        done = truncated or terminated
 
         mario.cache(state, next_state, action, reward, done)
 
